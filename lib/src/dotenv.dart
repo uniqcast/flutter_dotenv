@@ -54,7 +54,7 @@ class DotEnv {
     if(value == null){
       throw Exception('$name variable not found. A non-null fallback is required for missing entries');
     }
-    return value!;
+    return value;
   }
 
   String? maybeGet(String name, {String? fallback}) => env[name] ?? fallback;
