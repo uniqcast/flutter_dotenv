@@ -50,8 +50,9 @@ class DotEnv {
 
   String get(String name, {String? fallback}) {
     final value = maybeGet(name, fallback: fallback);
-    if(value == null){
-      throw Exception('$name variable not found. A non-null fallback is required for missing entries');
+    if (value == null) {
+      throw Exception(
+          '$name variable not found. A non-null fallback is required for missing entries');
     }
     return value;
   }
@@ -101,11 +102,11 @@ class DotEnv {
       WidgetsFlutterBinding.ensureInitialized();
       var envString = await rootBundle.loadString(filename);
       if (envString.isEmpty) {
-        throw EmptyEnvFileError();
+        return [];
       }
       return envString.split('\n');
     } on FlutterError {
-      throw FileNotFoundError();
+      return [];
     }
   }
 }
