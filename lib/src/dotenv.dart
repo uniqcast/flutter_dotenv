@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/widgets.dart';
@@ -51,8 +50,11 @@ class DotEnv {
 
   String get(String name, {String? fallback}) {
     final value = maybeGet(name, fallback: fallback);
-    assert(value != null, 'A non-null fallback is required for missing entries');
-    return value!;
+    if (value == null) {
+      throw Exception(
+          '$name variable not found. A non-null fallback is required for missing entries');
+    }
+    return value;
   }
 
   String? maybeGet(String name, {String? fallback}) => env[name] ?? fallback;
@@ -60,10 +62,14 @@ class DotEnv {
   /// Loads environment variables from the env file into a map
   /// Merge with any entries defined in [mergeWith]
   Future<void> load(
-      {String fileName = '.env', Parser parser = const Parser(), Map<String, String> mergeWith = const {}}) async {
+      {String fileName = '.env',
+      Parser parser = const Parser(),
+      Map<String, String> mergeWith = const {}}) async {
     clean();
     final linesFromFile = await _getEntriesFromFile(fileName);
-    final linesFromMergeWith = mergeWith.entries.map((entry) => "${entry.key}=${entry.value}").toList();
+    final linesFromMergeWith = mergeWith.entries
+        .map((entry) => "${entry.key}=${entry.value}")
+        .toList();
     final allLines = linesFromMergeWith..addAll(linesFromFile);
     final envEntries = parser.parse(allLines);
     _envMap.addAll(envEntries);
@@ -71,10 +77,14 @@ class DotEnv {
   }
 
   void testLoad(
-      {String fileInput = '', Parser parser = const Parser(), Map<String, String> mergeWith = const {}}) {
+      {String fileInput = '',
+      Parser parser = const Parser(),
+      Map<String, String> mergeWith = const {}}) {
     clean();
     final linesFromFile = fileInput.split('\n');
-    final linesFromMergeWith = mergeWith.entries.map((entry) => "${entry.key}=${entry.value}").toList();
+    final linesFromMergeWith = mergeWith.entries
+        .map((entry) => "${entry.key}=${entry.value}")
+        .toList();
     final allLines = linesFromMergeWith..addAll(linesFromFile);
     final envEntries = parser.parse(allLines);
     _envMap.addAll(envEntries);
@@ -84,18 +94,19 @@ class DotEnv {
   /// True if all supplied variables have nonempty value; false otherwise.
   /// Differs from [containsKey](dart:core) by excluding null values.
   /// Note [load] should be called first.
-  bool isEveryDefined(Iterable<String> vars) => vars.every((k) => _envMap[k]?.isNotEmpty ?? false);
+  bool isEveryDefined(Iterable<String> vars) =>
+      vars.every((k) => _envMap[k]?.isNotEmpty ?? false);
 
   Future<List<String>> _getEntriesFromFile(String filename) async {
     try {
       WidgetsFlutterBinding.ensureInitialized();
       var envString = await rootBundle.loadString(filename);
       if (envString.isEmpty) {
-        throw EmptyEnvFileError();
+        return [];
       }
       return envString.split('\n');
     } on FlutterError {
-      throw FileNotFoundError();
+      return [];
     }
   }
 }
